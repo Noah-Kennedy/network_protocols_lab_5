@@ -3,8 +3,8 @@
 - Fall 2017
 - Lab N
 - Names:
-  -
-  -
+  - Noah Kennedy
+  - Ashpreet Kaur
 
 A simple HTTP client
 """
