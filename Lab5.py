@@ -131,7 +131,7 @@ def read_header(tcp_socket: socket) -> Dict:
 
 
 # TODO
-def read_content_length(client_socket: socket, content_length: int):
+def read_content_length(client_socket: socket, content_length: int) -> str:
     string_headers = headers.decode('utf-8')
     split_headers = string_headers.split('\r\n')
     n = 0
