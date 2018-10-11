@@ -74,11 +74,15 @@ def make_http_request(host, port, resource, file_name):
     clientSocket.sendall(getRequest + b'Host: ' + host + b'\r\n\r\n')
     header = read_headers(clientSocket)
     relevent_headers = get_contentlenght_chunked(header)
+    message = ""
     if relevent_headers[1] == 'chunked':
-        read_chunked(clientSocket)
+        message = read_chunked(clientSocket)
     else:
         # call content length and pass in relevant_header[0]
-        get_contentlenght_chunked(relevent_headers[0])
+        message = get_contentlenght_chunked(relevent_headers[0])
+    
+    write_to_file(message, file_name)
+    
     
     print(header)
     return 500  # Replace this "server error" with the actual status code
