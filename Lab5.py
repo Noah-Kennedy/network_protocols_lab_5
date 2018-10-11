@@ -70,55 +70,53 @@ def make_http_request(host, port, resource, file_name):
     """
     client_socket = socket.socket(AF_INET, SOCK_STREAM)
     client_socket.connect((host, port))
-    client_socket.sendall(b'GET / HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
+    resource = client_socket.sendall(b'GET / HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
     header = read_headers(client_socket)
-    
-    relevant_headers = get_contentlenght_chunked(header)
-    
-    contents = read_contents(relevant_headers, client_socket)
-    
+    relevant_headers = body(header)
+    contents = reads_body(relevant_headers, client_socket)
     client_socket.close()
-    status = status_index(header)
+    status = header.decode('utf-8').split(' ')[1]
     write_to_file(contents, file_name)
-    
     return status
 
 
-def read_contents(length, socket):
+def reads_body(message ,socket):
     """
-    This method will decide either the response will be read
-    as content-length or chunked data.
-    :author:
-    :param length: The content-length or chunk
-    :param socket: The data socket
-    :return: Either the body of content-length or chunk
+    According to the situation, this method will either read and return
+    content_length or the chunked data
+    :author: Ashpreet kaur
+    :param message: is either the content-length or chunk
+    :param socket: is the data socket
+    :return: either content-length or chunk
     """
-    if length == 'chunked':
+    data = b''
+    if message == 'chunked':
         return read_chunked(socket)
     else:
-        return read_body(length, socket)
+        for i in range(0, message):
+            data += next_byte(socket)
+        return data
 
 
-def status_index(header):
+def body(header):
     """
-    //todo - helped method
-    Return the status index from http header
-    :author:
-    :param header: The header of the response
-    :return: result2 the status index of http request
+    this method returns integer if its content_length
+    otherwise it uses chucnked for the chunk of the data
+    :author: Ashpreet kaur
+    :param header: the http response header
+    :return: either integer value if its content length otherwise chunk
     """
-    info = header.decode('utf-8')
-    result = info.split(' ')
-    result2 = result[1]
-    return result2
-
+    if get_contentlenght_chunked(header) == " chunked":
+        return get_contentlenght_chunked(header)
+    else:
+        return int(get_contentlenght_chunked(header))
 
 def read_chunked(tcp_socket):
     """
     Reads a chunked message.
+    :author: Noah Kennedy
     :param tcp_socket: The TCP Socket to read the message from.
     :return: The chunked contents.
-    :author: Noah Kennedy
     """
     last_two = [b'', b'']
     chunk_num = b''
@@ -132,7 +130,6 @@ def read_chunked(tcp_socket):
         output += tcp_socket.recv(int(chunk_num, 16))
         tcp_socket.recv(2)
         last_two = [b'', b'']
-    
     return output
 
 
@@ -168,47 +165,23 @@ def read_headers(socket):
         header += next_byte(socket)
     return header.split(b'\r\n\r\n')[0]
 
-
 def get_contentlenght_chunked(header):
     """
-    //todo - helped to change the if statement and remove arrays
-    :param header:
-    :return:
+    First it chanegs byte to string
+    then it splits the line with CRLF
+    then it goes to the fourth line that is the content length
+    then it splits again with CRLF
+    and then returns the content_length
+    :param header: is the http reponse
+    :return:the content length of http header
     """
-    # #changes byte header to string and splits the line
-    # split_headers = header.decode('utf-8').split('\r\n')
-    # #goes to the fourth lines of the header which could be either chuncked or content length
-    # content_length = split_headers[4].split(' ')[1]
-    # #i used array where [1] is either chunck or content length
-    # chunked = split_headers[3].split(' ')[1]
-    # #stored the array in respense variable which is being called by the main
-    # response = [content_length, chunked]
-    
     split_headers = header.decode('utf-8').split('\r\n')
     content_length = split_headers[4].split(' ')[1]
-    if content_length == " chunked":
-        return content_length
-    else:
-        return int(content_length)
-
-
-def read_body(length, socket):
-    """
-    //todo - helped
-    :param length:
-    :param socket:
-    :return:
-    """
-    data = b''
-    for i in range(0, length):
-        data += next_byte(socket)
-    return data
-
+    return content_length
 
 def write_to_file(message, file_name):
     """
-    This method saves to a file
-    
+    This method writes to a file
     @author: Ashpreet kaur
     :param message: is the data or message that we received
     :param file_name: name of file in which to store the retrieved resource
