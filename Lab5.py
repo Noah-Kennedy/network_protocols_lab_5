@@ -23,11 +23,11 @@ def main():
     """
     
     # These resource request should result in "Content-Length" data transfer
-    get_http_resource('http://msoe.us/taylor/', 'index.html')
-    
-    # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
-    
+
+    # this resource request should result in "chunked" data transfer
+    get_http_resource('http://msoe.us/taylor/', 'index.html')
+
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
 
 
@@ -78,8 +78,8 @@ def make_http_request(host: bytes, port: int, resource: bytes, file_name: str) -
     header = read_header(client_socket)
     
     message = ""
-    if "content_length" in header:
-        message = read_content_length(client_socket, int(header[b"content_length"]))
+    if b'Content-Length' in header:
+        message = read_content_length(client_socket, int(header[b'Content-Length']))
     else:
         message = read_chunked(client_socket)
     
@@ -153,13 +153,13 @@ def read_header(tcp_socket: socket) -> Dict[bytes, bytes]:
     
     for field in fields:
         splitup = re.compile(":").split(field)
-        header[splitup[0]] = splitup[1]
+        header[splitup[0].encode()] = splitup[1].encode()
 
     return header
 
 
 # TODO
-def read_content_length(client_socket: socket, content_length: int) -> str:
+def read_content_length(client_socket: socket, content_length: int) -> bytes:
     """
     Reads the body a content-length http message.
     :param client_socket: The socket with the message body.
@@ -175,10 +175,10 @@ def read_content_length(client_socket: socket, content_length: int) -> str:
     # contentlength = split_headers[n].split(' ')[1]
     # return contentlength
     
-    return ""
+    return b''
 
 
-def read_chunked(tcp_socket: socket):
+def read_chunked(tcp_socket: socket) -> bytes:
     """
     Reads a chunked message.
     :param tcp_socket: The TCP Socket to read the message from.
