@@ -79,7 +79,7 @@ def make_http_request(host: bytes, port: int, resource: bytes, file_name: str) -
     
     message = ""
     if "content_length" in header:
-        message = read_content_length(client_socket, header["content_length"])
+        message = read_content_length(client_socket, int(header[b"content_length"]))
     else:
         message = read_chunked(client_socket)
     
@@ -118,7 +118,7 @@ def read_status(tcp_socket: socket) -> int:
     new_byte = next_byte(tcp_socket)
     
     # Read the rest of the status line
-    while not (old_byte == b"\r" and new_byte == b"\n"):
+    while old_byte != b"\r" or new_byte != b"\n":
         old_byte = new_byte
         new_byte = next_byte(tcp_socket)
     
@@ -132,9 +132,30 @@ def read_header(tcp_socket: socket) -> Dict[bytes, bytes]:
     :param tcp_socket: The tcp socket to read bytes from.
     :return: A dictionary whose keys are the http fields and whose values are the associated values
     """
-    output: Dict = []
+    header: Dict = dict()
     
-    return output
+    reading_buffer = [b'', b'', b'', b'']
+    message = b''
+    
+    reading_buffer[3] = next_byte(tcp_socket)
+    
+    # Read fields until "\r\n\r\n"
+    while reading_buffer[0] != b'\r' or reading_buffer[1] != b'\n' or reading_buffer[2] != b'\r' or reading_buffer[3] != b'\n':
+        message += reading_buffer[3]
+        
+        reading_buffer[0] = reading_buffer[1]
+        reading_buffer[1] = reading_buffer[2]
+        reading_buffer[2] = reading_buffer[3]
+        reading_buffer[3] = next_byte(tcp_socket)
+    
+    fields = re.compile("\r\n").split(message.decode("utf-8"))
+    fields.remove("\r")
+    
+    for field in fields:
+        splitup = re.compile(":").split(field)
+        header[splitup[0]] = splitup[1]
+
+    return header
 
 
 # TODO
@@ -146,13 +167,15 @@ def read_content_length(client_socket: socket, content_length: int) -> str:
     :return: Returns a string containing the message body.
     :author: Ashpreet Kaur
     """
-    string_headers = headers.decode('utf-8')
-    split_headers = string_headers.split('\r\n')
-    n = 0
-    while 'Content-Length:' not in split_headers[n]:
-        n = n + 1
-    contentlength = split_headers[n].split(' ')[1]
-    return contentlength
+    # string_headers = headers.decode('utf-8')
+    # split_headers = string_headers.split('\r\n')
+    # n = 0
+    # while 'Content-Length:' not in split_headers[n]:
+    #    n = n + 1
+    # contentlength = split_headers[n].split(' ')[1]
+    # return contentlength
+    
+    return ""
 
 
 def read_chunked(tcp_socket: socket):
