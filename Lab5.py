@@ -84,18 +84,21 @@ def reads_body(message ,socket):
     """
     According to the situation, this method will either read and return
     content_length or the chunked data
-    :author: Ashpreet kaur
+    The if statement calls the chunked data if the message is chunked
+    the else statement calls the content_length and converts the result to
+    an integer and returns it
+    :author: Ashpreet Kaur
     :param message: is either the content-length or chunk
     :param socket: is the data socket
     :return: either content-length or chunk
     """
-    data = b''
+    header_message = b''
     if message == 'chunked':
         return read_chunked(socket)
     else:
         for i in range(0, message):
-            data += next_byte(socket)
-        return data
+            header_message += next_byte(socket)
+        return header_message
 
 
 def body(header):
