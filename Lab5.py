@@ -131,6 +131,7 @@ def read_header(tcp_socket: socket) -> Dict[bytes, bytes]:
     Reads the headers from an http get request.
     :param tcp_socket: The tcp socket to read bytes from.
     :return: A dictionary whose keys are the http fields and whose values are the associated values
+    :author: Noah Kennedy
     """
     header: Dict = dict()
     
@@ -164,7 +165,7 @@ def read_content_length(client_socket: socket, content_length: int) -> bytes:
     Reads the body a content-length http message.
     :param client_socket: The socket with the message body.
     :param content_length: The length of the content.
-    :return: Returns a string containing the message body.
+    :return: Returns a bytes object containing the message body.
     :author: Ashpreet Kaur
     """
     # string_headers = headers.decode('utf-8')
