@@ -21,13 +21,13 @@ def main():
     """
     Tests the client on a variety of resources
     """
-
+    
     # These resource request should result in "Content-Length" data transfer
     get_http_resource('http://msoe.us/taylor/', 'index.html')
-
+    
     # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
-
+    
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
 
 
@@ -41,7 +41,7 @@ def get_http_resource(url, file_name):
 
     (do not modify this function)
     """
-
+    
     # Parse the URL into its component parts using a regular expression.
     url_match = re.search('http://([^/:]*)(:\d*)?(/.*)', url)
     url_match_groups = url_match.groups() if url_match else []
@@ -69,55 +69,65 @@ def make_http_request(host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
-
+    
     client_socket = socket.socket(AF_INET, SOCK_STREAM)
     client_socket.connect((host, port))
     client_socket.sendall(b'GET /' + resource + b'/ HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
-
+    
     status = read_status(client_socket)
     header = read_header(client_socket)
-
+    
     message = ""
     if "content_length" in header:
         message = read_content_length(client_socket, header["content_length"])
     else:
         message = read_chunked(client_socket)
-
+    
     write_to_file(message, file_name)
-
+    
     client_socket.close()
     return status
 
 
 def read_status(tcp_socket: socket) -> int:
-    output = b""
-    last_byte = next_byte(tcp_socket)
-
-    while last_byte != b" ":
-        last_byte = next_byte(tcp_socket)
-
-    last_byte = next_byte(tcp_socket)
-
-    while last_byte != b" ":
-        output += last_byte
-        last_byte = next_byte(tcp_socket)
-
-    return int(output)
+    """
+    Reads the status line.
+    :param tcp_socket: The socket to read the line from.
+    :return: The status code.
+    :author: Noah Kennedy
+    """
+    status_bytes = b""
+    
+    # Read first byte
+    new_byte = next_byte(tcp_socket)
+    
+    # Keep reading bytes until we read a space
+    while new_byte != b" ":
+        new_byte = next_byte(tcp_socket)
+    
+    # Read the space
+    new_byte = next_byte(tcp_socket)
+    
+    # Read bytes and add them to status_bytes until we read a space.
+    while new_byte != b" ":
+        status_bytes += new_byte
+        new_byte = next_byte(tcp_socket)
+    
+    # Two bytes are now used as a buffer so that we can check for "\r\n"
+    old_byte = new_byte
+    new_byte = next_byte(tcp_socket)
+    
+    # Read the rest of the status line
+    while not (old_byte == b"\r" and new_byte == b"\n"):
+        old_byte = new_byte
+        new_byte = next_byte(tcp_socket)
+    
+    return int(status_bytes)
 
 
 # TODO
 def read_header(tcp_socket: socket) -> Dict:
     output: Dict = []
-
-    while
-
-    current_item = b""
-
-    last_byte = next_byte(tcp_socket)
-
-    while last_byte != ":"
-        current_item += last_byte
-        last_byte = next_byte(tcp_socket)
 
 
 # TODO
