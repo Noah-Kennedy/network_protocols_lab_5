@@ -22,11 +22,11 @@ def main():
     """
     
     # These resource request should result in "Content-Length" data transfer
-    get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
-    
-    # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/', 'index.html')
-    
+
+    # this resource request should result in "chunked" data transfer
+    get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
+
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
 
 
@@ -68,14 +68,23 @@ def make_http_request(host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
+
     client_socket = socket.socket(AF_INET, SOCK_STREAM)
     client_socket.connect((host, port))
-    resource = client_socket.sendall(b'GET / HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
-    header = read_headers(client_socket)
-    relevant_headers = body(header)
-    contents = reads_body(relevant_headers, client_socket)
+    client_socket.sendall(b'GET /' + resource + b'/ HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
+
+    status = read_status(client_socket)
+    header = read_header(client_socket)
+    message = ""
+    if "content_length" in header:
+        message = read_content_length(client_socket, header["content_length"])
+    else:
+        message = read_chunked(client_socket)
+
+    write_to_file(message, file_name)
+
+
     client_socket.close()
-    status = header.decode('utf-8').split(' ')[1]
     write_to_file(contents, file_name)
     return status
 
@@ -92,8 +101,7 @@ def reads_body(message ,socket):
     :param socket: is the data socket
     :return: either content-length or chunk
     """
-    header_message = b''
-    if message == 'chunked':
+    if message == -1:
         return read_chunked(socket)
     else:
         for i in range(0, message):
@@ -109,10 +117,10 @@ def body(header):
     :param header: the http response header
     :return: either integer value if its content length otherwise chunk
     """
-    if get_contentlenght_chunked(header) == " chunked":
-        return get_contentlenght_chunked(header)
+    if is_content_length(header) == " chunked":
+        return is_content_length(header)
     else:
-        return int(get_contentlenght_chunked(header))
+        return -1
 
 def read_chunked(tcp_socket):
     """
@@ -126,7 +134,7 @@ def read_chunked(tcp_socket):
     output = b''
     while not chunk_num == b'0':
         chunk_num = b''
-        while not (last_two[0] == b'\r' and last_two[1] == b'n'):
+        while not (last_two[0] == b'\r' and last_two[1] == b'\n'):
             chunk_num += last_two[0]
             last_two[0] = last_two[1]
             last_two[1] = next_byte(tcp_socket)
@@ -168,16 +176,7 @@ def read_headers(socket):
         header += next_byte(socket)
     return header.split(b'\r\n\r\n')[0]
 
-def get_contentlenght_chunked(header):
-    """
-    First it chanegs byte to string
-    then it splits the line with CRLF
-    then it goes to the fourth line that is the content length
-    then it splits again with CRLF
-    and then returns the content_length
-    :param header: is the http reponse
-    :return:the content length of http header
-    """
+def is_content_length(header):
     split_headers = header.decode('utf-8').split('\r\n')
     content_length = split_headers[4].split(' ')[1]
     return content_length
