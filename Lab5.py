@@ -72,11 +72,17 @@ def make_http_request(host, port, resource, file_name):
     clientSocket = socket.socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((host, port))
     clientSocket.sendall(getRequest + b'Host: ' + host + b'\r\n\r\n')
-    # print (clientSocket.recv(1000))
-    # clientSocket.close()
     header = read_headers(clientSocket)
+    relevent_headers = get_contentlenght_chunked(header)
+    if relevent_headers[1] == 'chunked':
+        # call chuncked method
+    else:
+        # call content length and pass in relevant_header[0]
+        get_contentlenght_chunked(relevent_headers[0])
+
     print(header)
     return 500  # Replace this "server error" with the actual status code
+
 
 def next_byte(data_socket):
     """
@@ -98,6 +104,7 @@ def next_byte(data_socket):
 def read_headers(socket):
     """
     This method reads the headers
+
     @author: Ashpreet kaur
     :param socket: is the socket to read from.
     :return: The header
@@ -107,17 +114,27 @@ def read_headers(socket):
         if b'\x0d\x0a\x0d\x0a' in header:
             break
         header += next_byte(socket)
-    return header.split(b'\r\n\r\n')[0].decode('utf-8')
+    return header.split(b'\r\n\r\n')[0]
 
-#chaNGS BYTES TO STRING
 
-# def reads_content_length(header):
+# chaNGS BYTES TO STRING
 
-# def reads_body():
+def get_contentlenght_chunked(header):
+    split_headers = header.decode('UTF-8').split('\r\n')
+    content_length = split_headers[4].split(' ')[1]
+    chunked = split_headers[3].split(' ')[1]
 
-#def reads_chunked_data():
+    response = [content_length, chunked]
 
-def save_to_file(message, file_name):
+
+def reads_body_length(file, data_socket, lenght):
+    for x in range(0, lenght + 1):
+        file.write(next_byte(data_socket))
+
+
+# def reads_chunked_data():
+
+def write_to_file(message, file_name):
     """
     This method saves to a file
     @author: Ashpreet kaur
@@ -127,5 +144,6 @@ def save_to_file(message, file_name):
     with open(file_name, 'wb') as file:
         file.write(message)
     file.close()
+
 
 main()
