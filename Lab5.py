@@ -141,9 +141,9 @@ def read_headers(socket):
 # chaNGS BYTES TO STRING
 
 def get_contentlenght_chunked(header):
-    split_headers = header.decode('UTF-8').split('\r\n')
-    content_length = split_headers[4].split(' ')[1]
-    chunked = split_headers[3].split(' ')[1]
+    split_headers = header.split(b'\r\n')
+    content_length = split_headers[4].split(b' ')[1]
+    chunked = split_headers[3].split(b' ')[1]
     
     response = [content_length, chunked]
     
