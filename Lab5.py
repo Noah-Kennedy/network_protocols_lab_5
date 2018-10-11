@@ -14,6 +14,7 @@ import socket
 
 # import the "regular expressions" module
 import re
+from typing import Dict, List
 
 
 def main():
@@ -88,7 +89,42 @@ def make_http_request(host, port, resource, file_name):
     return status
 
 
-def read_chunked(tcp_socket):
+def read_status(tcp_socket: socket) -> int:
+    output = b""
+    last_byte = next_byte(tcp_socket)
+
+    while last_byte != b" ":
+        last_byte = next_byte(tcp_socket)
+
+    last_byte = next_byte(tcp_socket)
+
+    while last_byte != b" ":
+        output += last_byte
+        last_byte = next_byte(tcp_socket)
+
+    return int(output)
+
+
+# TODO
+def read_header(tcp_socket: socket) -> Dict:
+    output: Dict = []
+
+    while
+
+    current_item = b""
+
+    last_byte = next_byte(tcp_socket)
+
+    while last_byte != ":"
+        current_item += last_byte
+        last_byte = next_byte(tcp_socket)
+
+
+# TODO
+def read_content_length(tcp_socket: socket, content_length: int) -> str:
+
+
+def read_chunked(tcp_socket: socket):
     """
     Reads a chunked message.
     :author: Noah Kennedy
