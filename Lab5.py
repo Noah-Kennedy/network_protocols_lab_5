@@ -68,34 +68,24 @@ def make_http_request(host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
-    clientSocket = socket.socket(AF_INET, SOCK_STREAM)
-    clientSocket.connect((host, port))
-    clientSocket.sendall(b'GET / HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
-    header = read_headers(clientSocket)
-
-    relevent_headers = get_contentlenght_chunked(header)
-
-    chunk = separate_cl_chunk(relevent_headers,clientSocket)
-
-
-    # message = ""
-    # if relevent_headers[1] == "chunked":
-    #     message = read_chunked(clientSocket)
-    # else:
-    #     # call content length and pass in relevant_header[0]
-    #     message = reads_body_length(file_name,clientSocket, relevent_headers[0])
-
-    clientSocket.close()
-    st = status_index(header)
-    write_to_file(chunk, file_name)
-
-    # print(header)
-    return st  # Replace this "server error" with the actual status code
+    client_socket = socket.socket(AF_INET, SOCK_STREAM)
+    client_socket.connect((host, port))
+    client_socket.sendall(b'GET / HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
+    header = read_headers(client_socket)
+    
+    relevant_headers = get_contentlenght_chunked(header)
+    
+    contents = read_contents(relevant_headers, client_socket)
+    
+    client_socket.close()
+    status = status_index(header)
+    write_to_file(contents, file_name)
+    
+    return status
 
 
-def separate_cl_chunk(length, socket):
+def read_contents(length, socket):
     """
-    //todo - helped method
     This method will decide either the response will be read
     as content-length or chunked data.
     :author:
@@ -106,7 +96,8 @@ def separate_cl_chunk(length, socket):
     if length == 'chunked':
         return read_chunked(socket)
     else:
-        return read_body(length,socket)
+        return read_body(length, socket)
+
 
 def status_index(header):
     """
@@ -121,7 +112,14 @@ def status_index(header):
     result2 = result[1]
     return result2
 
+
 def read_chunked(tcp_socket):
+    """
+    Reads a chunked message.
+    :param tcp_socket: The TCP Socket to read the message from.
+    :return: The chunked contents.
+    :author: Noah Kennedy
+    """
     last_two = [b'', b'']
     chunk_num = b''
     output = b''
@@ -159,7 +157,7 @@ def read_headers(socket):
     """
     This method reads the headers
 
-    @author: Ashpreet kaur
+    :author: Ashpreet kaur
     :param socket: is the socket to read from.
     :return: The header
     """
@@ -185,13 +183,14 @@ def get_contentlenght_chunked(header):
     # chunked = split_headers[3].split(' ')[1]
     # #stored the array in respense variable which is being called by the main
     # response = [content_length, chunked]
-
+    
     split_headers = header.decode('utf-8').split('\r\n')
     content_length = split_headers[4].split(' ')[1]
     if content_length == " chunked":
         return content_length
     else:
         return int(content_length)
+
 
 def read_body(length, socket):
     """
@@ -204,6 +203,7 @@ def read_body(length, socket):
     for i in range(0, length):
         data += next_byte(socket)
     return data
+
 
 def write_to_file(message, file_name):
     """
