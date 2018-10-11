@@ -68,19 +68,19 @@ def make_http_request(host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
-    getRequest = b'GET / HTTP/1.1\r\n'
     clientSocket = socket.socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((host, port))
-    clientSocket.sendall(getRequest + b'Host: ' + host + b'\r\n\r\n')
+    clientSocket.sendall(b'GET / HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
     header = read_headers(clientSocket)
     relevent_headers = get_contentlenght_chunked(header)
     message = ""
-    if relevent_headers[1] == 'chunked':
+    if relevent_headers[1] == "chunked":
         message = read_chunked(clientSocket)
     else:
         # call content length and pass in relevant_header[0]
         message = get_contentlenght_chunked(relevent_headers[0])
-    
+
+    clientSocket.close()
     write_to_file(message, file_name)
     
     
@@ -132,30 +132,28 @@ def read_headers(socket):
     """
     header = b''
     while True:
-        if b'\x0d\x0a\x0d\x0a' in header:
+        if b'\r\n\r\n' in header:
             break
         header += next_byte(socket)
     return header.split(b'\r\n\r\n')[0]
 
 
-# chaNGS BYTES TO STRING
-
 def get_contentlenght_chunked(header):
-    split_headers = header.split(b'\r\n')
-    content_length = split_headers[4].split(b' ')[1]
-    chunked = split_headers[3].split(b' ')[1]
-    
+    #changes byte header to string and splits the line
+    split_headers = header.decode('utf-8').split('\r\n')
+    #goes to the fourth lines of the header which could be either chuncked or content length
+    content_length = split_headers[4].split(' ')[1]
+    #i used array where [1] is either chunck or content length
+    chunked = split_headers[3].split(' ')[1]
+    #stored the array in respense variable which is being called by the main
     response = [content_length, chunked]
-    
+
     return response
 
 
-def reads_body_length(file, data_socket, lenght):
-    for x in range(0, lenght + 1):
-        file.write(next_byte(data_socket))
-
-
-# def reads_chunked_data():
+# def reads_body_length(file, data_socket, length):
+#     for x in range(0, length + 1):
+#         file.write(next_byte(data_socket))
 
 def write_to_file(message, file_name):
     """
