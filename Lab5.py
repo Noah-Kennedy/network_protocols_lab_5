@@ -57,7 +57,7 @@ def get_http_resource(url, file_name):
         print('get_http_resource: URL parse failed, request not sent')
 
 
-def make_http_request(host, port, resource, file_name):
+def make_http_request(host: bytes, port: int, resource: bytes, file_name: str) -> int:
     """
     Get an HTTP resource from a server
 
@@ -67,7 +67,7 @@ def make_http_request(host, port, resource, file_name):
            including the first /.
     :param file_name: string (str) containing name of file in which to store the retrieved resource
     :return: the status code
-    :rtype: int
+    :return: The status code of the http response.
     """
     
     client_socket = socket.socket(AF_INET, SOCK_STREAM)
@@ -126,12 +126,26 @@ def read_status(tcp_socket: socket) -> int:
 
 
 # TODO
-def read_header(tcp_socket: socket) -> Dict:
+def read_header(tcp_socket: socket) -> Dict[bytes, bytes]:
+    """
+    Reads the headers from an http get request.
+    :param tcp_socket: The tcp socket to read bytes from.
+    :return: A dictionary whose keys are the http fields and whose values are the associated values
+    """
     output: Dict = []
+    
+    return output
 
 
 # TODO
 def read_content_length(client_socket: socket, content_length: int) -> str:
+    """
+    Reads the body a content-length http message.
+    :param client_socket: The socket with the message body.
+    :param content_length: The length of the content.
+    :return: Returns a string containing the message body.
+    :author: Ashpreet Kaur
+    """
     string_headers = headers.decode('utf-8')
     split_headers = string_headers.split('\r\n')
     n = 0
@@ -144,9 +158,9 @@ def read_content_length(client_socket: socket, content_length: int) -> str:
 def read_chunked(tcp_socket: socket):
     """
     Reads a chunked message.
-    :author: Noah Kennedy
     :param tcp_socket: The TCP Socket to read the message from.
     :return: The chunked contents.
+    :author: Noah Kennedy
     """
     last_two = [b'', b'']
     chunk_num = b''
