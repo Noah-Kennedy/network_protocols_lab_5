@@ -20,13 +20,13 @@ def main():
     """
     Tests the client on a variety of resources
     """
-
+    
     # These resource request should result in "Content-Length" data transfer
     get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
-
+    
     # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/', 'index.html')
-
+    
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
 
 
@@ -40,7 +40,7 @@ def get_http_resource(url, file_name):
 
     (do not modify this function)
     """
-
+    
     # Parse the URL into its component parts using a regular expression.
     url_match = re.search('http://([^/:]*)(:\d*)?(/.*)', url)
     url_match_groups = url_match.groups() if url_match else []
@@ -75,13 +75,30 @@ def make_http_request(host, port, resource, file_name):
     header = read_headers(clientSocket)
     relevent_headers = get_contentlenght_chunked(header)
     if relevent_headers[1] == 'chunked':
-        # call chuncked method
+        read_chunked(clientSocket)
     else:
         # call content length and pass in relevant_header[0]
         get_contentlenght_chunked(relevent_headers[0])
-
+    
     print(header)
     return 500  # Replace this "server error" with the actual status code
+
+
+def read_chunked(tcp_socket):
+    last_two = [b'', b'']
+    chunk_num = b''
+    output = b''
+    while not chunk_num == b'0':
+        chunk_num = b''
+        while not (last_two[0] == b'\r' and last_two[1] == b'n'):
+            chunk_num += last_two[0]
+            last_two[0] = last_two[1]
+            last_two[1] = next_byte(tcp_socket)
+        output += tcp_socket.recv(int(chunk_num, 16))
+        tcp_socket.recv(2)
+        last_two = [b'', b'']
+    
+    return output
 
 
 def next_byte(data_socket):
@@ -123,8 +140,10 @@ def get_contentlenght_chunked(header):
     split_headers = header.decode('UTF-8').split('\r\n')
     content_length = split_headers[4].split(' ')[1]
     chunked = split_headers[3].split(' ')[1]
-
+    
     response = [content_length, chunked]
+    
+    return response
 
 
 def reads_body_length(file, data_socket, lenght):
