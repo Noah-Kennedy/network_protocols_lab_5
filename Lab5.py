@@ -121,7 +121,14 @@ def read_header(tcp_socket: socket) -> Dict:
 
 
 # TODO
-def read_content_length(tcp_socket: socket, content_length: int) -> str:
+def read_content_length(headers):
+    string_headers = headers.decode('utf-8')
+    split_headers = string_headers.split('\r\n')
+    n = 0
+    while 'Content-Length:' not in split_headers[n]:
+        n = n + 1
+    contentlength = split_headers[n].split(' ')[1]
+    return contentlength
 
 
 def read_chunked(tcp_socket: socket):
