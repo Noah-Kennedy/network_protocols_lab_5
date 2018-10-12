@@ -8,7 +8,6 @@
 
 A simple HTTP client
 """
-from socket import *
 # import the "socket" module -- not using "from socket import *" in order to selectively use items with "socket." prefix
 import socket
 
@@ -70,9 +69,9 @@ def make_http_request(host: bytes, port: int, resource: bytes, file_name: str) -
     :return: The status code of the http response.
     """
     
-    client_socket = socket.socket(AF_INET, SOCK_STREAM)
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((host, port))
-    client_socket.sendall(b'GET /' + resource + b'/ HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
+    client_socket.sendall(b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n')
     
     status = read_status(client_socket)
     header = read_header(client_socket)
@@ -84,8 +83,7 @@ def make_http_request(host: bytes, port: int, resource: bytes, file_name: str) -
         message = read_chunked(client_socket)
     
     write_to_file(message, file_name)
-    
-    client_socket.close()
+
     return status
 
 
@@ -160,23 +158,19 @@ def read_header(tcp_socket: socket) -> Dict[bytes, bytes]:
 
 
 # TODO
-def read_content_length(client_socket: socket, content_length: int) -> bytes:
+def read_content_length(data_socket: socket, content_length: int) -> bytes:
     """
     Reads the body a content-length http message.
-    :param client_socket: The socket with the message body.
+    :param data_socket: The socket with the message body.
     :param content_length: The length of the content.
     :return: Returns a bytes object containing the message body.
     :author: Ashpreet Kaur
     """
-    # string_headers = headers.decode('utf-8')
-    # split_headers = string_headers.split('\r\n')
-    # n = 0
-    # while 'Content-Length:' not in split_headers[n]:
-    #    n = n + 1
-    # contentlength = split_headers[n].split(' ')[1]
-    # return contentlength
-    
-    return b''
+    message = b''
+    for x in range(0,content_length):
+        message += next_byte(data_socket)
+    return message
+
 
 
 def read_chunked(tcp_socket: socket) -> bytes:
@@ -225,9 +219,9 @@ def write_to_file(message, file_name):
     :param message: is the data or message that we received
     :param file_name: name of file in which to store the retrieved resource
     """
-    with open(file_name, 'wb') as file:
-        file.write(message)
-    file.close()
+
+    with open(file_name, 'wb') as output:
+        output.write(message)
 
 
 main()
